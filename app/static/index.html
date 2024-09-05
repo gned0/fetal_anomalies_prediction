@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XGBoost API Test</title>
+</head>
+<body>
+    <h2>Test the XGBoost Prediction API</h2>
+    <form id="predictionForm">
+        <label for="features">Enter Features (comma-separated):</label><br>
+        <input type="text" id="features" name="features" required><br><br>
+        <input type="submit" value="Submit">
+    </form>
+
+    <p id="response"></p>
+
+    <script>
+        document.getElementById("predictionForm").addEventListener("submit", function(event) {
+            event.preventDefault();  // Prevent page reload
+            
+            const features = document.getElementById("features").value.split(",").map(Number); // Get the input
+            const data = { features: [features] };  // Wrap it into JSON
+
+            fetch('http://localhost:5000/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),  // Send JSON request
+            })
+            .then(response => response.json())  // Parse JSON response
+            .then(data => {
+                document.getElementById("response").innerText = `Prediction: ${data.prediction}`;
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
