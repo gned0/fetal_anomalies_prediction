@@ -6,7 +6,7 @@ app = Flask(__name__, static_folder='static')
 
 # Load the XGBoost model
 model = xgb.XGBClassifier()
-model.load_model('xgboost_00.json')
+model.load_model('models/xgboost_00.json')
 
 # Define a dictionary to map predictions to labels
 prediction_mapping = {0: "normal", 1: "suspect", 2: "pathological"}
