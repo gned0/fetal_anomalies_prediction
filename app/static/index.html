@@ -3,24 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XGBoost API Test</title>
+    <title>Fetal anomalies predictor</title>
 </head>
 <body>
-    <h2>Test the XGBoost Prediction API</h2>
+    <h2>Fetal anomalies predictor</h2>
     <form id="predictionForm">
-        <label for="features">Enter Features (comma-separated):</label><br>
-        <input type="text" id="features" name="features" required><br><br>
+        <label for="features">Enter Features:</label><br>
+        
+        <!-- Container for dynamically generated input fields -->
+        <div id="inputFields"></div>
+
+        <br>
         <input type="submit" value="Submit">
     </form>
 
     <p id="response"></p>
+    <p id="error" style="color:red;"></p>  <!-- To display errors -->
 
     <script>
+        // List of feature names based on the dataset
+        const featureNames = [
+            "Baseline Value (BL)", "Baseline Variability (BV)", "Number of Accelerations (AC)",
+            "Number of Decelerations (DC)", "Number of Severe Decelerations (SDEC)",
+            "Number of Early Decelerations (ED)", "Number of Variable Decelerations (VD)",
+            "Number of Accelerations (AC) (long)", "Number of Decelerations (DC) (long)",
+            "Number of Severe Decelerations (SDEC) (long)", "Number of Early Decelerations (ED) (long)",
+            "Number of Variable Decelerations (VD) (long)", "Percentage of Accelerations (PAC)",
+            "Percentage of Decelerations (PDC)", "Percentage of Severe Decelerations (PSDEC)",
+            "Percentage of Early Decelerations (PED)", "Percentage of Variable Decelerations (PVD)",
+            "Percentage of Accelerations (PAC) (long)", "Percentage of Decelerations (PDC) (long)",
+            "Percentage of Severe Decelerations (PSDEC) (long)", "Percentage of Early Decelerations (PED) (long)"
+        ];
+
+        // Function to create input fields dynamically
+        function createInputFields() {
+            const container = document.getElementById('inputFields');
+            container.innerHTML = '';  // Clear existing fields
+
+            featureNames.forEach((name, index) => {
+                const label = document.createElement('label');
+                label.setAttribute('for', `feature${index}`);
+                label.innerText = name;
+
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.id = `feature${index}`;
+                input.required = true;
+
+                container.appendChild(label);
+                container.appendChild(input);
+                container.appendChild(document.createElement('br'));
+            });
+        }
+
+        // Call the function to create input fields on page load
+        createInputFields();
+
         document.getElementById("predictionForm").addEventListener("submit", function(event) {
             event.preventDefault();  // Prevent page reload
             
-            const features = document.getElementById("features").value.split(",").map(Number); // Get the input
+            // Collect values from all input fields
+            const features = [];
+            for (let i = 0; i < featureNames.length; i++) {
+                features.push(Number(document.getElementById(`feature${i}`).value));
+            }
+            
             const data = { features: [features] };  // Wrap it into JSON
+
+            // Clear previous responses
+            document.getElementById("response").innerText = "";
+            document.getElementById("error").innerText = "";
 
             fetch('http://localhost:5000/predict', {
                 method: 'POST',
@@ -29,11 +81,19 @@
                 },
                 body: JSON.stringify(data),  // Send JSON request
             })
-            .then(response => response.json())  // Parse JSON response
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.error || "An unknown error occurred");
+                    });
+                }
+                return response.json();  // Parse JSON response
+            })
             .then(data => {
                 document.getElementById("response").innerText = `Prediction: ${data.prediction}`;
             })
             .catch((error) => {
+                document.getElementById("error").innerText = `Error: ${error.message}`;
                 console.error('Error:', error);
             });
         });
